@@ -142,6 +142,12 @@ git-tree-sha1 = "4f4935719119350b1f4c464341ef64743920ea74"
 uuid = "1b08a953-4be3-4667-9a23-9da06441d987"
 version = "1.16.0"
 
+[[DashDaq]]
+deps = ["Dash"]
+git-tree-sha1 = "74484bb5f2193fc7379b295f81e6563624e9b8ee"
+uuid = "1b08a953-4be3-4667-9a23-a540cca008f6"
+version = "0.5.0"
+
 [[DashHtmlComponents]]
 deps = ["DashBase"]
 git-tree-sha1 = "86d6f3575d8456190f0f3523e7313eaa8432c905"

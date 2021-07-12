@@ -20,21 +20,11 @@ function render_graph_title(df)
     html_h5("Plots"),
     dbc_row([
       dbc_col([
-        dcc_dropdown(
-          id="dflx-graph-dropdown-x",
-          options = [Dict("label" => rn, "value" => rn) for rn in row_names],
-          value = row_names[end],
-          multi=false
-        )
+        render_single_graphtitle(row_names)
       ],
       md=6),
       dbc_col([
-        dcc_dropdown(
-          id="dflx-graph-dropdown-y",
-          options = [Dict("label" => rn, "value" => rn) for rn in row_names],
-          value = row_names[end],
-          multi=true
-        )
+        render_mult_graphtitle(row_names)
       ],
       md=6)
     ],
@@ -52,17 +42,49 @@ function render_graph(df, x_xolumn, y_columns)
       "mode" => "markers"
     )]
   else
-    dt = [Dict(
+        dt = [Dict(
       "x" => df[!,Symbol(x_xolumn)], 
       "y" => df[!,Symbol(yc)], 
       "type" => "scatter",
       "mode" => "markers"
     ) for yc in y_columns]
   end
-  fig=Dict(
+  return Dict(
       "data" => dt,
       "layout" => Dict(
           "title" => "Dash Data Visualization"
       )
   )
+end
+function render_mult_graphtitle(row_names;id_val="dflx-graph-dropdown-y")
+  return dcc_dropdown(
+    id=id_val,
+    options = [Dict("label" => rn, "value" => rn) for rn in row_names],
+    value = row_names[end],
+    multi=true
+  )
+end
+function render_single_graphtitle(row_names;id_val="dflx-graph-dropdown-x")
+  return dcc_dropdown(
+    id=id_val,
+    options = [Dict("label" => rn, "value" => rn) for rn in row_names],
+    value = row_names[end],
+    multi=false
+  )
+end
+
+function render_nn_layer(n_click)
+  return [dbc_col([
+        dbc_card([
+            dbc_cardbody(
+                [
+                    html_h4("Layer $i", className="card-title"),
+                    daq_numericinput(label="Output count", value=2)
+                ]
+            )
+        ])
+        ], 
+        md=2
+    ) for i in 1:n_click]
+  
 end
