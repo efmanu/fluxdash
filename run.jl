@@ -216,5 +216,11 @@ callback!(app,
     return "success"
 end
 
-
+# @callback
+# tp = Tuple{Float64, Int}[]
+# while isready(ch) && length(tp) < 100
+#     push!(tp, take!(ch))
+# end
+# return dcc_graph(tp)
+# end
 run_server(app, "0.0.0.0", 8050, debug=true)

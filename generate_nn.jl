@@ -1,4 +1,8 @@
+const ch = Channel{Tuple{Float64, Int}}(Inf)
 function create_nn(df, in_labels, out_labels, hidden_outs; training_percent = 70, ep = 1)
+  # CSV.write("training_status.csv",Data)
+
+  
   labels = vcat(in_labels, out_labels)
   labels = unique(labels)
   #filter data
@@ -44,5 +48,18 @@ function create_nn(df, in_labels, out_labels, hidden_outs; training_percent = 70
   stfunc() = @show(L(X_train,y_train)) 
 
   Flux.@epochs ep Flux.train!(L, ps, data, opt, cb = () -> stfunc())
+  # training_loss = 0.0
+  # for i in 1:ep
+  #   for d in data
+  #     gs = Flux.gradient(ps) do
+  #       training_loss =L(d...)
+  #       return training_loss
+  #     end			
+  #     Flux.Optimise.update!(opt, ps, gs)		
+  #   end		
+  #   #print loss
+  #   put!(ch, (training_loss, ep))
+  #   # println("Traing loss: ", training_loss," Epoch: ", i)
+  # end
   return 0
 end
