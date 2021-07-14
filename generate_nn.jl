@@ -17,9 +17,6 @@ function create_nn(df, in_labels, out_labels, hidden_outs; training_percent = 70
   dtx = fit(UnitRangeTransform, Float64.(X), dims=1)
   X = StatsBase.transform(dtx, X)
 
-  dty = fit(UnitRangeTransform, y, dims=1)
-  y = StatsBase.transform(dty, y)
-
   train_len = Int(ceil(n_row*(training_percent/100)))
   X_train = X[1:train_len,:]'
   X_test = X[train_len+1:end,:]'
@@ -47,5 +44,5 @@ function create_nn(df, in_labels, out_labels, hidden_outs; training_percent = 70
   stfunc() = @show(L(X_train,y_train)) 
 
   Flux.@epochs ep Flux.train!(L, ps, data, opt, cb = () -> stfunc())
-  return "success"
+  return 0
 end

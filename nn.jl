@@ -51,7 +51,7 @@ ps = Flux.params(m)
 
 stfunc() = @show(L(X_train,y_train)) 
 
-Flux.@epochs 4 Flux.train!(L, ps, data, opt, cb = () -> stfunc())
+Flux.@epochs 100 Flux.train!(L, ps, data, opt, cb = () -> stfunc())
 
 plt = PlotlyJS.scatter(
   Dict(
@@ -70,6 +70,4 @@ plt1 = PlotlyJS.scatter(
 )
 PlotlyJS.Plot([plt, plt1])
 
-dic = Dict("a" => rand(10), "b" => rand(10))
-df = DataFrame(dic)
-fig = PlotlyBase.scatter(df, x="a", y="b")
+

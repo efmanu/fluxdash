@@ -82,7 +82,7 @@ app.layout = html_div([
                                                 ]),
                                                 dcc_store(id="dflx-nn-layer-count"),
                                                 dbc_row(id = "dflx-hidden-layers"),                                                
-                                                html_div(id="dflx-nnlayer-count")
+                                                html_div(id="dflx-nnlayer-count", style=Dict("display" => "none"))
                                             ]
                                         )
                                     ])
@@ -109,7 +109,7 @@ app.layout = html_div([
                                     daq_numericinput(id="dflx-nntrain-percent", label="Percentage of training dataset", value=70, max = 99, min = 1)
                                 ]),
                                 dbc_col([
-                                    daq_numericinput(id="dflx-nntrain-epoch", label="Epochs", value=4, min = 1)
+                                    daq_numericinput(id="dflx-nntrain-epoch", label="Epochs", value=4, min = 1, max=10000)
                                 ]),
                                 dbc_col([
                                     dbc_button(
@@ -212,7 +212,8 @@ callback!(app,
     end 
     new_tp = DataFrame(;zip(Tuple(Symbol.(df.colindex.names)), Tuple(df.columns))...)   
     hidden_outs = [ch.props.children[1].props.children[1].props.children[2].props.value for ch in child] 
-    model = create_nn(new_tp, in_labels, out_labels, hidden_outs, training_percent = tr_len, ep = ep)
+    @async create_nn(new_tp, in_labels, out_labels, hidden_outs, training_percent = tr_len, ep = ep)
+    return "success"
 end
 
 
