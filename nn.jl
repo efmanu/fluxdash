@@ -71,3 +71,55 @@ plt1 = PlotlyJS.scatter(
 PlotlyJS.Plot([plt, plt1])
 
 
+
+
+trace1 = Dict(
+    "type" => "histogram", 
+    "x"=> rand(500)
+  )
+  data = [trace1]
+  layout = Dict(
+    "barmode" => "overlay"
+  )
+  ph = PlotlyJS.histogram(
+    data
+  )
+  PlotlyJS.Plot([ph])
+
+  ph = PlotlyJS.histogram(
+    x = rand(1000), nbins = 100
+  )
+  abc = PlotlyJS.Plot([ph])
+
+app = dash()
+data = [Dict(
+  "x" => rand(1000),  
+  "type" => "histogram",
+  "nbinsx" => 200,
+  "opacity" => 0.5,
+  "marker" => Dict(
+    "color" => "red"
+  ),),
+  Dict(
+  "x" => rand(1000).+1.0,  
+  "type" => "histogram",
+  "nbinsx" => 200,
+  "opacity" => 0.5,
+  "marker" => Dict(
+    "color" => "blue"
+  ),)
+  ]
+
+
+fig = Dict(
+  "data" => data,
+  "layout" => Dict(
+      "title" => "Dash Data Visualization"
+  )
+)
+app.layout = dcc_graph(
+      id = "example-graph-3",
+      figure = fig,
+  )
+  run_server(app, "0.0.0.0", debug=true)
+

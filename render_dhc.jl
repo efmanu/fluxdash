@@ -1,18 +1,17 @@
 function render_table(df, filename; n_rows = 1)
-  table_header = 
-     html_thead(
-       html_tr([
-         html_th(nm) for nm in names(df)
-       ])
-     )
-  table_body =  html_tbody([
-      html_tr([html_td(df[nr,nc]) for nc in 1:ncol(df)]) for nr in 1:n_rows
-    ])
-    return html_div([
-      html_h5("Displaying first $n_rows rows of $filename"),
-      dbc_table([table_header , table_body], bordered=true)
-  ],  
-  )
+  return html_div([
+    html_h3(filename),
+    DashTable.dash_datatable(
+      data = Dict.(pairs.(eachrow(df))),
+      columns=[Dict("name" =>c, "id" => c) for c in names(df)],
+      virtualization=true,
+      fixed_rows=Dict("headers" => true),
+      style_cell=Dict(
+          "minWidth" =>  95, "maxWidth" =>  95, "width" =>  95
+      ),
+      style_table=Dict("height" => 300),  # default is 500
+      page_action="none"
+  )])
 end
 function render_graph_title(df)
   row_names = names(df) 
@@ -79,7 +78,7 @@ function render_nn_layer(n_click)
             dbc_cardbody(
                 [
                     html_h4("Layer $i", className="card-title"),
-                    daq_numericinput(label="Output count", value=2)
+                    daq_numericinput(label="Output count", value=2, max = 10000, min = 1)
                 ]
             )
         ])
@@ -87,4 +86,37 @@ function render_nn_layer(n_click)
         md=2
     ) for i in 1:n_click]
   
+end
+function render_training()
+  return dbc_row([
+      dbc_col([
+          dcc_interval(
+              id="interval-component",
+              interval=1000, # in milliseconds
+              n_intervals=0,
+              disabled=false
+          ),
+          dcc_graph(id="live-update-graph")
+      ]),
+      dbc_col([
+         html_div(id="dflx-testing-section")
+      ]),
+  ])
+end
+function render_testing(trained_model, df, in_labels, out_labels)
+  _, X_test, _, y_test = format_nn_data(df, in_labels, out_labels)
+  yₚ, err, maerr, mserr, crenpy = test_nn(m,X_test,y_test)
+  return dbc_row([
+      dbc_col([
+          dcc_interval(
+              id="dflx-interval-testing",
+              interval=100, # in milliseconds
+              n_intervals=0
+          ),
+          dcc_graph(id="live-tegraph")
+      ]),
+      dbc_col([
+         dbc_gaph 
+      ]),
+  ])
 end

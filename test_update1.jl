@@ -3,7 +3,6 @@ using Dash, DashCoreComponents, DashHtmlComponents
 app = dash()
 
 app.layout = html_div([
-  dcc_store(id="data-memory", data=[]),
   dcc_interval(
       id="interval-component",
       interval=1*1000, # in milliseconds
@@ -13,37 +12,23 @@ app.layout = html_div([
   dcc_graph(id="live-update-graph")
 ])
 
-callback!(app,
-  Output("live-update-text", "children"), 
-  Input("interval-component", "n_intervals"),
-  ) do n
-    return n
-end
-
-callback!(app,
-  Output("data-memory", "data"), 
-  Input("interval-component", "n_intervals"),
-  State("data-memory", "data")
-  ) do n, dt
-    return push!(dt,rand())
-end
 
 callback!(app,
   Output("live-update-graph", "figure"),
   Input("interval-component", "n_intervals"),
-  State("data-memory", "data"),
-  State("live-update-graph", "figure")) do n,dt, stg
-    @show stg
-    if !(stg isa Nothing)
-      if stg[1][1].x isa Nothing
+  State("live-update-graph", "figure")) do n, stg
+    if !(stg isa Nothing)      
+      if !(stg[1][1].x isa Nothing)
         append!(stg[1][1].x, stg[1][1].x[end]+1)
         append!(stg[1][1].y, 2*rand()+3)
-      end
+      end      
+    else  
+      stg = [[(x = [1], y = [2*rand()+3])]]    
     end
     return Dict(
       "data" => [Dict(
-        "x" => 1:n,
-        "y" =>dt,
+        "x" => stg[1][1].x,
+        "y" =>stg[1][1].y,
         "mode" => "line",
       ),  
       ]

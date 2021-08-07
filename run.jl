@@ -12,6 +12,8 @@ include("utils.jl")
 include("render_dhc.jl")
 include("generate_nn.jl")
 external_stylesheets = "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"
+
+global chn = Channel{Tuple{Float64, Int, Chain}}(Inf)
 app = dash(external_stylesheets=[dbc_themes.BOOTSTRAP,external_stylesheets], 
     suppress_callback_exceptions=true)
 
@@ -56,76 +58,80 @@ app.layout = html_div([
                         ],
                         id="dflx-data-tab", label="Data", tab_id="tab-1"),
                         dbc_tab([
-                            dbc_row([
-                                dbc_col([
-                                    dbc_card([
-                                        dbc_cardbody(
-                                            [
-                                                html_h4("Select Inputs", className="card-title"),
-                                                html_div(id="dflx-input-name-list"),
-                                            ]
-                                        )
-                                    ])
-                                    ], 
-                                    md=2
-                                ),
-                                dbc_col([
-                                    dbc_card([
-                                        dbc_cardbody(
-                                            [
-                                                html_h4("Hidden Layers", className="card-title"),                  
-                                                html_div([                                                    
-                                                    dbc_row([
-                                                        dbc_col([html_i(id="dflx-add-hidden-layer",className="fa fa-plus-square fa-2x")],md=1,style=Dict("color" => "green")),
-                                                        dbc_col([html_i(id="dflx-remove-hidden-layer",className="fa fa-minus-square fa-2x")],md=1,style=Dict("color" => "red"))
-                                                    ], style=Dict("cursor" => "pointer"))
-                                                ]),
-                                                dcc_store(id="dflx-nn-layer-count"),
-                                                dbc_row(id = "dflx-hidden-layers"),                                                
-                                                html_div(id="dflx-nnlayer-count", style=Dict("display" => "none"))
-                                            ]
-                                        )
-                                    ])
-                                    ], 
-                                    md=8
-                                ),
-                                dbc_col([
-                                    dbc_card([
-                                        dbc_cardbody(
-                                            [
-                                                html_h4("Select Outputs", className="card-title"),
-                                                html_div(id="dflx-output-name-list"),
-                                            ]
-                                        )
-                                    ])
-                                    ], 
-                                    md=2
-                                )
-                            ],
-                            align="center",
-                            ),
-                            dbc_row([
-                                dbc_col([
-                                    daq_numericinput(id="dflx-nntrain-percent", label="Percentage of training dataset", value=70, max = 99, min = 1)
-                                ]),
-                                dbc_col([
-                                    daq_numericinput(id="dflx-nntrain-epoch", label="Epochs", value=4, min = 1, max=10000)
-                                ]),
-                                dbc_col([
-                                    dbc_button(
-                                        "Start Training", id="dflx-nnlayer-submit",
-                                        color="success", className="mr-1",
-                                        style = Dict(
-                                            "margin-top" => "20px",
-                                            "display" => "flex",
-                                            "justify-content" => "center"
-                                        )
+                            html_div([
+                                dbc_row([
+                                    dbc_col([
+                                        dbc_card([
+                                            dbc_cardbody(
+                                                [
+                                                    html_h4("Select Inputs", className="card-title"),
+                                                    html_div(id="dflx-input-name-list"),
+                                                ]
+                                            )
+                                        ])
+                                        ], 
+                                        md=2
                                     ),
-                                ])
-                            ]),                            
+                                    dbc_col([
+                                        dbc_card([
+                                            dbc_cardbody(
+                                                [
+                                                    html_h4("Hidden Layers", className="card-title"),                  
+                                                    html_div([                                                    
+                                                        dbc_row([
+                                                            dbc_col([html_i(id="dflx-add-hidden-layer",className="fa fa-plus-square fa-2x")],md=1,style=Dict("color" => "green")),
+                                                            dbc_col([html_i(id="dflx-remove-hidden-layer",className="fa fa-minus-square fa-2x")],md=1,style=Dict("color" => "red"))
+                                                        ], style=Dict("cursor" => "pointer"))
+                                                    ]),
+                                                    dcc_store(id="dflx-nn-layer-count"),
+                                                    dbc_row(id = "dflx-hidden-layers"),                                                
+                                                    html_div(id="dflx-nnlayer-count", style=Dict("display" => "none"))
+                                                ]
+                                            )
+                                        ])
+                                        ], 
+                                        md=8
+                                    ),
+                                    dbc_col([
+                                        dbc_card([
+                                            dbc_cardbody(
+                                                [
+                                                    html_h4("Select Outputs", className="card-title"),
+                                                    html_div(id="dflx-output-name-list"),
+                                                ]
+                                            )
+                                        ])
+                                        ], 
+                                        md=2
+                                    )
+                                ],
+                                align="center",
+                                ),
+                                dbc_row([
+                                    dbc_col([
+                                        daq_numericinput(id="dflx-nntrain-percent", label="Percentage of training dataset", value=70, max = 99, min = 1)
+                                    ]),
+                                    dbc_col([
+                                        daq_numericinput(id="dflx-nntrain-epoch", label="Epochs", value=4, min = 1, max=10000)
+                                    ]),
+                                    dbc_col([
+                                        dbc_button(
+                                            "Start Training", id="dflx-nnlayer-submit",
+                                            color="success", className="mr-1",
+                                            style = Dict(
+                                                "margin-top" => "20px",
+                                                "display" => "flex",
+                                                "justify-content" => "center"
+                                            )
+                                        ),
+                                    ])
+                                ]),                                  
+                            ]),
+                            html_div(id="dflx-training-updates")                          
                         ],
                         style = Dict("margin-top" => "20px"),
-                        id="dflx-nn-tab", label="NN Config", tab_id="tab-2", disabled="true"),                    
+                        id="dflx-nn-tab", label="NN Config", tab_id="tab-2", disabled="true"),
+                        dbc_tab(id="dflx-pred-tab", label="Prediction", tab_id="tab-3", disabled="true")                    
                     ],                
                     id="card-tabs",
                     card=true,
@@ -196,9 +202,10 @@ callback!(app,
     end
     return layer_count, render_nn_layer(layer_count)
 end
+
 #start training
 callback!(app,
-    Output("dflx-nnlayer-count", "children"),    
+    Output("dflx-training-updates", "children"),    
     Input("dflx-nnlayer-submit", "n_clicks"),
     State("dflx-nninput-dropdown", "value"),
     State("dflx-nnoutput-dropdown", "value"),
@@ -212,15 +219,44 @@ callback!(app,
     end 
     new_tp = DataFrame(;zip(Tuple(Symbol.(df.colindex.names)), Tuple(df.columns))...)   
     hidden_outs = [ch.props.children[1].props.children[1].props.children[2].props.value for ch in child] 
-    @async create_nn(new_tp, in_labels, out_labels, hidden_outs, training_percent = tr_len, ep = ep)
-    return "success"
+    rt = create_nn(new_tp, in_labels, out_labels, hidden_outs, training_percent = tr_len, ep = ep)
+    return render_training()
 end
 
-# @callback
-# tp = Tuple{Float64, Int}[]
-# while isready(ch) && length(tp) < 100
-#     push!(tp, take!(ch))
-# end
-# return dcc_graph(tp)
-# end
+callback!(app,
+  Output("live-update-graph", "figure"),
+  Output("interval-component", "disabled"),
+  Output("dflx-pred-tab", "disabled"),
+  Output("dflx-testing-section", "children"),
+  Input("interval-component", "n_intervals"),
+  State("live-update-graph", "figure"), 
+  prevent_initial_call=true) do n, stg
+    st = false
+    m = nothing
+    if isready(chn)     
+        (l,ep,m) = take!(chn)   
+        if !(stg isa Nothing)      
+            if !(stg[1][1].x isa Nothing)
+                append!(stg[1][1].x, ep)
+                append!(stg[1][1].y, l)
+            end  
+        else  
+            stg = [[(x = [ep], y = [l])]]    
+        end
+    else
+        st = true
+    end
+    status_val = (st ? "training finished" : "trainig started")
+    test_render = (st ? html_div("training") : html_div("testing"))
+    return Dict(
+      "data" => [
+        Dict(
+            "x" => stg[1][1].x,
+            "y" =>stg[1][1].y,
+            "mode" => "line",
+        ),  
+      ]
+    ),st, !st, test_render
+end
+
 run_server(app, "0.0.0.0", 8050, debug=true)

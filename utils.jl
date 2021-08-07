@@ -13,5 +13,8 @@ function parse_contents(contents, filename)
         "There was an error processing this file."
     ])
   end
-  return df
+   #shuffle data
+   n_row = nrow(df)
+   shuffle_data = df[shuffle(1:n_row)[:], :]
+  return shuffle_data
 end
