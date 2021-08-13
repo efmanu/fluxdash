@@ -1,4 +1,3 @@
-# const ch = Channel{Tuple{Float64, Int}}(Inf)
 function format_nn_data(df, in_labels, out_labels; training_percent=70)
   n_row = nrow(df)
   labels = vcat(in_labels, out_labels)
@@ -23,26 +22,6 @@ function format_nn_data(df, in_labels, out_labels; training_percent=70)
   return X_train, X_test, y_train, y_test 
 end
 function create_nn(df, in_labels, out_labels, hidden_outs; training_percent = 70, ep = 1)
-  # CSV.write("training_status.csv",Data)
-  # labels = vcat(in_labels, out_labels)
-  # labels = unique(labels)
-  # #filter data
-  # filter_df = df[:, filter(x -> (x in labels), names(df))]
-
-  # X = filter_df[:, filter(x -> (x in vcat(in_labels)), names(filter_df))]
-  # y = filter_df[:, filter(x -> (x in vcat(out_labels)), names(filter_df))]
-
-  # X = Float64.(Array(X))
-  # y = Float64.(Array(y))
-
-  # dtx = fit(UnitRangeTransform, Float64.(X), dims=1)
-  # X = StatsBase.transform(dtx, X)
-
-  # train_len = Int(ceil(n_row*(training_percent/100)))
-  # X_train = X[1:train_len,:]'
-  # X_test = X[train_len+1:end,:]'
-  # y_train = y[1:train_len,:]'
-  # y_test = y[train_len+1:end,:]'
   X_train, _, y_train, _ = format_nn_data(df, in_labels, out_labels, training_percent=training_percent)
   data =  DataLoader((X_train,y_train), batchsize=128, shuffle=true)
   

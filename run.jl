@@ -13,7 +13,7 @@ include("render_dhc.jl")
 include("generate_nn.jl")
 external_stylesheets = "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"
 
-global chn = Channel{Tuple{Float64, Int, Chain}}(Inf)
+chn = Channel{Tuple{Float64, Int, Chain}}(Inf)
 app = dash(external_stylesheets=[dbc_themes.BOOTSTRAP,external_stylesheets], 
     suppress_callback_exceptions=true)
 
@@ -229,8 +229,9 @@ callback!(app,
   Output("dflx-pred-tab", "disabled"),
   Output("dflx-testing-section", "children"),
   Input("interval-component", "n_intervals"),
-  State("live-update-graph", "figure"), 
-  prevent_initial_call=true) do n, stg
+  State("live-update-graph", "figure"),
+  State("dflx-nntrain-epoch", "value"), 
+  prevent_initial_call=true) do n, stg,epval
     st = false
     m = nothing
     if isready(chn)     
@@ -247,7 +248,7 @@ callback!(app,
         st = true
     end
     status_val = (st ? "training finished" : "trainig started")
-    test_render = (st ? html_div("training") : html_div("testing"))
+    test_render = (st ? html_div("testing") : dbc_progress(value=(ep/epval)*100))
     return Dict(
       "data" => [
         Dict(

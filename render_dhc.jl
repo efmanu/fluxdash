@@ -92,7 +92,7 @@ function render_training()
       dbc_col([
           dcc_interval(
               id="interval-component",
-              interval=1000, # in milliseconds
+              interval=100, # in milliseconds
               n_intervals=0,
               disabled=false
           ),
