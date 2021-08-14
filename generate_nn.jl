@@ -21,10 +21,8 @@ function format_nn_data(df, in_labels, out_labels; training_percent=70)
   y_test = y[train_len+1:end,:]'
   return X_train, X_test, y_train, y_test 
 end
-function create_nn(df, in_labels, out_labels, hidden_outs; training_percent = 70, ep = 1)
-  X_train, _, y_train, _ = format_nn_data(df, in_labels, out_labels, training_percent=training_percent)
+function create_nn(X_train, y_train, in_labels, out_labels, hidden_outs; training_percent = 70, ep = 1)
   data =  DataLoader((X_train,y_train), batchsize=128, shuffle=true)
-  
   in_len = in_labels isa Vector ? length(in_labels) : 1
   out_len = out_labels isa Vector ? length(out_labels) : 1
   in_layer = Dense(in_len, hidden_outs[1])
@@ -61,9 +59,9 @@ function create_nn(df, in_labels, out_labels, hidden_outs; training_percent = 70
 end
 function test_nn(m,x,y)
   yₚ = m(x)
-  err = yₚ- y
+  @show size(yₚ)
   maerr = Flux.Losses.mae(yₚ, y) #mean absolute error
   mserr = Flux.Losses.mse(yₚ, y) #mean square error
   crenpy = Flux.Losses.crossentropy(yₚ, y) #cross entropy
-  return yₚ, err, maerr, mserr, crenpy
+  return yₚ, maerr, mserr, crenpy
 end

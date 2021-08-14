@@ -1,4 +1,5 @@
 function render_table(df, filename; n_rows = 1)
+  df = df[!, Not("id")]
   return html_div([
     html_h3(filename),
     DashTable.dash_datatable(
@@ -15,6 +16,7 @@ function render_table(df, filename; n_rows = 1)
 end
 function render_graph_title(df)
   row_names = names(df) 
+  row_names = row_names[row_names .!= "id"]
   return html_div([
     html_h5("Plots"),
     dbc_row([
@@ -29,7 +31,7 @@ function render_graph_title(df)
     ],
     align="center"
     ),    
-    dcc_graph(id="dflx-plot-graph", figure =  render_graph(df, row_names[ncol(df)], row_names[ncol(df)]))    
+    dcc_graph(id="dflx-plot-graph", figure =  render_graph(df, row_names[end], row_names[end]))    
   ])
 end
 function render_graph(df, x_xolumn, y_columns)
@@ -103,20 +105,7 @@ function render_training()
       ]),
   ])
 end
-function render_testing(trained_model, df, in_labels, out_labels)
-  _, X_test, _, y_test = format_nn_data(df, in_labels, out_labels)
-  yₚ, err, maerr, mserr, crenpy = test_nn(m,X_test,y_test)
-  return dbc_row([
-      dbc_col([
-          dcc_interval(
-              id="dflx-interval-testing",
-              interval=100, # in milliseconds
-              n_intervals=0
-          ),
-          dcc_graph(id="live-tegraph")
-      ]),
-      dbc_col([
-         dbc_gaph 
-      ]),
-  ])
+function render_testing(m, X_test,y_test)
+  yₚ, maerr, mserr, crenpy = test_nn(m,X_test,y_test)
+  return html_div("test finished error is: $maerr")
 end

@@ -16,5 +16,6 @@ function parse_contents(contents, filename)
    #shuffle data
    n_row = nrow(df)
    shuffle_data = df[shuffle(1:n_row)[:], :]
+   shuffle_data[!,"id"] = 1:n_row
   return shuffle_data
 end

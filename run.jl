@@ -19,6 +19,10 @@ app = dash(external_stylesheets=[dbc_themes.BOOTSTRAP,external_stylesheets],
 
 app.layout = html_div([
     dcc_store(id="dflx-data-memory"),
+    dcc_store(id="dflx-testdataX-memory"),
+    dcc_store(id="dflx-testdatay-memory"),
+    dcc_store(id="dflx-inlabels-memory"),
+    dcc_store(id="dflx-outlabels-memory"),
     dbc_container([
         dbc_card([
             dbc_cardheader(
@@ -163,6 +167,7 @@ callback!(
         return_data = render_table(df, filename; n_rows = 5)
         return_graph = render_graph_title(df)      
         row_names = names(df)  
+        row_names = row_names[row_names .!= "id"]
         return (
             df, return_data,
             return_graph, false,
@@ -205,22 +210,28 @@ end
 
 #start training
 callback!(app,
-    Output("dflx-training-updates", "children"),    
+    Output("dflx-training-updates", "children"),
+    Output("dflx-testdataX-memory", "data"),
+    Output("dflx-testdatay-memory", "data"),
+    Output("dflx-inlabels-memory", "data"),
+    Output("dflx-outlabels-memory", "data"),
     Input("dflx-nnlayer-submit", "n_clicks"),
     State("dflx-nninput-dropdown", "value"),
     State("dflx-nnoutput-dropdown", "value"),
     State("dflx-hidden-layers", "children"),
     State("dflx-data-memory", "data"),
     State("dflx-nntrain-percent", "value"),  
-    State("dflx-nntrain-epoch", "value"),    
+    State("dflx-nntrain-epoch", "value"),   
     prevent_initial_call=true) do nclicks, in_labels, out_labels, child, df, tr_len, ep
     if child isa Nothing
         throw(PreventUpdate())
     end 
-    new_tp = DataFrame(;zip(Tuple(Symbol.(df.colindex.names)), Tuple(df.columns))...)   
+    new_tp = DataFrame(;zip(Tuple(Symbol.(df.colindex.names)), Tuple(df.columns))...)  
+    X_train, X_test, y_train, y_test = format_nn_data(new_tp, in_labels, out_labels; training_percent=tr_len) 
+    @show size.([X_train, X_test, y_train, y_test])
     hidden_outs = [ch.props.children[1].props.children[1].props.children[2].props.value for ch in child] 
-    rt = create_nn(new_tp, in_labels, out_labels, hidden_outs, training_percent = tr_len, ep = ep)
-    return render_training()
+    rt = create_nn(X_train, y_train, in_labels, out_labels, hidden_outs, training_percent = tr_len, ep = ep)
+    return render_training(), X_test, y_test, in_labels, out_labels
 end
 
 callback!(app,
@@ -231,11 +242,21 @@ callback!(app,
   Input("interval-component", "n_intervals"),
   State("live-update-graph", "figure"),
   State("dflx-nntrain-epoch", "value"), 
-  prevent_initial_call=true) do n, stg,epval
-    st = false
-    m = nothing
+  State("dflx-testdataX-memory", "data"),
+  State("dflx-testdatay-memory", "data"),
+  State("dflx-inlabels-memory", "data"),
+  State("dflx-outlabels-memory", "data"),
+  prevent_initial_call=true) do n, stg,epval, X_test, y_test, in_labels, out_labels
+    len_X = in_labels isa String ? 1 : length(in_labels)
+    len_y = out_labels isa String ? 1 : length(out_labels)
+    X_test = reshape(X_test, len_X, :)
+    y_test = reshape(y_test, len_y, :)
+    @show size(X_test) size(y_test)
+    st = false 
+    m1 = Chain()   
     if isready(chn)     
-        (l,ep,m) = take!(chn)   
+        l,ep,m = take!(chn)
+        @show "in" m  
         if !(stg isa Nothing)      
             if !(stg[1][1].x isa Nothing)
                 append!(stg[1][1].x, ep)
@@ -248,7 +269,13 @@ callback!(app,
         st = true
     end
     status_val = (st ? "training finished" : "trainig started")
-    test_render = (st ? html_div("testing") : dbc_progress(value=(ep/epval)*100))
+    if st
+        @show m1
+        # test_render = render_testing(m, X_test,y_test)
+        test_render = "success"
+    else
+        test_render = dbc_progress(value=(ep/epval)*100)
+    end
     return Dict(
       "data" => [
         Dict(
