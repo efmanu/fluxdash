@@ -122,6 +122,7 @@ function render_nn_tab()
                         (label = "Rectified ADAM", value = "radam"),
                         (label = "AdaMax", value = "adamax"),
                     ],
+                    value = "adam",
                     placeholder="Select Optimizer",
                 ) 
               ]),
@@ -315,6 +316,7 @@ function render_nn_layer(n_click)
                             (label = "eLU", value = "elu"),
                             (label = "GeLU", value = "gelu")
                         ],
+                        value="no",
                         placeholder="Select Activation",
                     ) 
                 ]

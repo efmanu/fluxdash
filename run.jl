@@ -192,4 +192,6 @@ callback!(app,
     end 
 end
 
-run_server(app, "0.0.0.0", 8050, debug=true)
+port = haskey(ENV, "PORT") ? parse(Int64, ENV["PORT"]) : 8050
+
+run_server(app, "0.0.0.0", port)
