@@ -109,8 +109,27 @@ function render_nn_tab()
               dbc_col([
                   daq_numericinput(id="dflx-nntrain-percent", label="Percentage of training dataset", value=70, max = 99, min = 1)
               ]),
+              
               dbc_col([
-                  daq_numericinput(id="dflx-nntrain-epoch", label="Epochs", value=4, min = 1, max=10000)
+                dcc_dropdown(
+                    id="dflx-nntrain-optimizer",
+                    options = [
+                        (label = "Gradient Descent", value = "descent"),
+                        (label = "Momentum", value = "momentum"),
+                        (label = "Nesterov", value = "nesterov"),
+                        (label = "RMSProp", value = "rmsprop"),
+                        (label = "ADAM", value = "adam"),
+                        (label = "Rectified ADAM", value = "radam"),
+                        (label = "AdaMax", value = "adamax"),
+                    ],
+                    placeholder="Select Optimizer",
+                ) 
+              ]),
+              dbc_col([
+                  dcc_input(id="dflx-nntrain-lrate", placeholder="Learning Rate", value=0.1, type="number")
+              ]),
+              dbc_col([
+                daq_numericinput(id="dflx-nntrain-epoch", label="Epochs", value=4, min = 1, max=10000)
               ]),
               dbc_col([
                   dbc_button(
@@ -282,12 +301,27 @@ function render_nn_layer(n_click)
             dbc_cardbody(
                 [
                     html_h4("Layer $i", className="card-title"),
-                    daq_numericinput(label="Output count", value=2, max = 10000, min = 1)
+                    daq_numericinput(label="Output count", value=2, max = 10000, min = 1),
+                    dcc_dropdown(
+                        id="dflx-nntrain-activation",
+                        options = [
+                            (label = "No Activation", value = "no"),
+                            (label = "ReLU", value = "relu"),
+                            (label = "σ", value = "sigmoid"),
+                            (label = "softmax", value = "softmax"),
+                            (label = "tanh", value = "tanh"),
+                            (label = "RReLU", value = "rrelu"),
+                            (label = "CeLU", value = "celu"),
+                            (label = "eLU", value = "elu"),
+                            (label = "GeLU", value = "gelu")
+                        ],
+                        placeholder="Select Activation",
+                    ) 
                 ]
             )
         ])
         ], 
-        md=2
+        md=3
     ) for i in 1:n_click]
   
 end

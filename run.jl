@@ -104,8 +104,10 @@ callback!(app,
     State("dflx-hidden-layers", "children"),
     State("dflx-data-memory", "data"),
     State("dflx-nntrain-percent", "value"),  
-    State("dflx-nntrain-epoch", "value"),   
-    prevent_initial_call=true) do nclicks, labels_in, labels_out, child, df, tr_len, ep
+    State("dflx-nntrain-epoch", "value"), 
+    State("dflx-nntrain-optimizer","value"), 
+    State("dflx-nntrain-lrate","value"),
+    prevent_initial_call=true) do nclicks, labels_in, labels_out, child, df, tr_len, ep, opt, eta
     if child isa Nothing
         throw(PreventUpdate())
     end 
@@ -117,8 +119,9 @@ callback!(app,
     global y_test
     new_tp = DataFrame(;zip(Tuple(Symbol.(df.colindex.names)), Tuple(df.columns))...)  
     X_train, X_test, y_train, y_test = format_nn_data(new_tp, in_labels, out_labels; training_percent=tr_len) 
-    hidden_outs = [ch.props.children[1].props.children[1].props.children[2].props.value for ch in child] 
-    @async train_nn(X_train, y_train, in_labels, out_labels, hidden_outs, chn; training_percent = tr_len, ep = ep)
+    hidden_outs = [ch.props.children[1].props.children[1].props.children[2].props.value for ch in child]
+    hidden_activations = [ch.props.children[1].props.children[1].props.children[3].props.value for ch in child]  
+    @async train_nn(X_train, y_train, in_labels, out_labels, hidden_outs, chn, hidden_activations; training_percent = tr_len, ep = ep, opt = opt, eta = eta)
     return render_training(), X_test, y_test, in_labels, out_labels
 end
 
