@@ -50,16 +50,14 @@ function train_nn(X_train, y_train, in_labels, out_labels, hidden_outs, chn; tra
             return training_loss
           end			
           Flux.Optimise.update!(opt, ps, gs)		
-        end		
-        trn_finished = i == ep ? true : false
-        put!(chn, (training_loss, i, m, trn_finished))
+        end
+        put!(chn, (training_loss, i, m))
         # println("Traing loss: ", training_loss," Epoch: ", i)
       end
   return 0
 end
 function test_nn(m,x,y)
   yₚ = m(x)
-  @show size(yₚ)
   maerr = Flux.Losses.mae(yₚ, y) #mean absolute error
   mserr = Flux.Losses.mse(yₚ, y) #mean square error
   crenpy = Flux.Losses.crossentropy(yₚ, y) #cross entropy

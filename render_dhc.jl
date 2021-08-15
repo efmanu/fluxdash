@@ -1,3 +1,138 @@
+function render_all()
+    return dbc_container([
+        dbc_card([
+            dbc_cardheader(
+                dbc_tabs(
+                    [
+                        render_data_tab(),
+                        render_nn_tab(),
+                        render_prediction_tab()                   
+                    ],                
+                    id="card-tabs",
+                    card=true,
+                    active_tab="tab-1",
+                ),
+            )        
+        ])
+    ],
+    fluid=true
+    )
+end
+function render_data_tab()
+  return dbc_tab([
+      dbc_cardbody([
+          html_div([
+              dcc_upload(
+                  id="dflx-upload-data",
+                  children=html_div([
+                      "Drag and Drop or ",
+                      html_a("Select Files")
+                  ]),
+                  style=Dict(
+                      "width" => "100%",
+                      "height" => "60px",
+                      "lineHeight" => "60px",
+                      "borderWidth" => "1px",
+                      "borderStyle" => "dashed",
+                      "borderRadius" => "5px",
+                      "textAlign" => "center",
+                      "margin" => "10px"
+                  ),
+                  # Allow multiple files to be uploaded
+                  multiple=false
+              ),                                    
+              dbc_row([
+                  dbc_col([html_div(id="dflx-output-data-upload")], md=6),
+                  dbc_col([html_div(id="dflx-output-plot")], md=6),
+              ],
+              align="center",
+              )
+              
+          ])
+      ]),
+  ],
+  id="dflx-data-tab", label="Data", tab_id="tab-1")
+  
+end
+function render_nn_tab()
+  dbc_tab([
+      html_div([
+          dbc_row([
+              dbc_col([
+                  dbc_card([
+                      dbc_cardbody(
+                          [
+                              html_h4("Select Inputs", className="card-title"),
+                              html_div(id="dflx-input-name-list"),
+                          ]
+                      )
+                  ])
+                  ], 
+                  md=2
+              ),
+              dbc_col([
+                  dbc_card([
+                      dbc_cardbody(
+                          [
+                              html_h4("Hidden Layers", className="card-title"),                  
+                              html_div([                                                    
+                                  dbc_row([
+                                      dbc_col([html_i(id="dflx-add-hidden-layer",className="fa fa-plus-square fa-2x")],md=1,style=Dict("color" => "green")),
+                                      dbc_col([html_i(id="dflx-remove-hidden-layer",className="fa fa-minus-square fa-2x")],md=1,style=Dict("color" => "red"))
+                                  ], style=Dict("cursor" => "pointer"))
+                              ]),
+                              dcc_store(id="dflx-nn-layer-count"),
+                              dbc_row(id = "dflx-hidden-layers"),                                                
+                              html_div(id="dflx-nnlayer-count", style=Dict("display" => "none"))
+                          ]
+                      )
+                  ])
+                  ], 
+                  md=8
+              ),
+              dbc_col([
+                  dbc_card([
+                      dbc_cardbody(
+                          [
+                              html_h4("Select Outputs", className="card-title"),
+                              html_div(id="dflx-output-name-list"),
+                          ]
+                      )
+                  ])
+                  ], 
+                  md=2
+              )
+          ],
+          align="center",
+          ),
+          dbc_row([
+              dbc_col([
+                  daq_numericinput(id="dflx-nntrain-percent", label="Percentage of training dataset", value=70, max = 99, min = 1)
+              ]),
+              dbc_col([
+                  daq_numericinput(id="dflx-nntrain-epoch", label="Epochs", value=4, min = 1, max=10000)
+              ]),
+              dbc_col([
+                  dbc_button(
+                      "Start Training", id="dflx-nnlayer-submit",
+                      color="success", className="mr-1",
+                      style = Dict(
+                          "margin-top" => "20px",
+                          "display" => "flex",
+                          "justify-content" => "center"
+                      )
+                  ),
+              ])
+          ]),                                  
+      ]),
+      html_div(id="dflx-training-updates")                          
+  ],
+  style = Dict("margin-top" => "20px"),
+  id="dflx-nn-tab", label="NN Config", tab_id="tab-2", disabled="true")
+end
+function render_prediction_tab()
+  return dbc_tab(id="dflx-pred-tab", label="Prediction", tab_id="tab-3", disabled="true") 
+end
 function render_table(df, filename; n_rows = 1)
   df = df[!, Not("id")]
   return html_div([
