@@ -21,7 +21,7 @@ function format_nn_data(df, in_labels, out_labels; training_percent=70)
   y_test = y[train_len+1:end,:]'
   return X_train, X_test, y_train, y_test 
 end
-function create_nn(X_train, y_train, in_labels, out_labels, hidden_outs; training_percent = 70, ep = 1)
+function train_nn(X_train, y_train, in_labels, out_labels, hidden_outs, chn; training_percent = 70, ep = 1)
   data =  DataLoader((X_train,y_train), batchsize=128, shuffle=true)
   in_len = in_labels isa Vector ? length(in_labels) : 1
   out_len = out_labels isa Vector ? length(out_labels) : 1
@@ -51,8 +51,8 @@ function create_nn(X_train, y_train, in_labels, out_labels, hidden_outs; trainin
           end			
           Flux.Optimise.update!(opt, ps, gs)		
         end		
-        #print loss
-        put!(chn, (training_loss, i, m))
+        trn_finished = i == ep ? true : false
+        put!(chn, (training_loss, i, m, trn_finished))
         # println("Traing loss: ", training_loss," Epoch: ", i)
       end
   return 0

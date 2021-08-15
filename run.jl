@@ -14,6 +14,15 @@ include("generate_nn.jl")
 external_stylesheets = "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"
 
 chn = Channel{Tuple{Float64, Int, Chain}}(Inf)
+m = nothing
+trn_status = false
+data = nothing
+in_labels = nothing
+out_labels = nothing
+X_train = nothing
+X_test = nothing
+y_train = nothing
+y_test = nothing
 app = dash(external_stylesheets=[dbc_themes.BOOTSTRAP,external_stylesheets], 
     suppress_callback_exceptions=true)
 
@@ -228,9 +237,9 @@ callback!(app,
     end 
     new_tp = DataFrame(;zip(Tuple(Symbol.(df.colindex.names)), Tuple(df.columns))...)  
     X_train, X_test, y_train, y_test = format_nn_data(new_tp, in_labels, out_labels; training_percent=tr_len) 
-    @show size.([X_train, X_test, y_train, y_test])
+    global chn
     hidden_outs = [ch.props.children[1].props.children[1].props.children[2].props.value for ch in child] 
-    rt = create_nn(X_train, y_train, in_labels, out_labels, hidden_outs, training_percent = tr_len, ep = ep)
+    @async train_nn(X_train, y_train, in_labels, out_labels, hidden_outs,chn, training_percent = tr_len, ep = ep)
     return render_training(), X_test, y_test, in_labels, out_labels
 end
 
@@ -251,12 +260,10 @@ callback!(app,
     len_y = out_labels isa String ? 1 : length(out_labels)
     X_test = reshape(X_test, len_X, :)
     y_test = reshape(y_test, len_y, :)
-    @show size(X_test) size(y_test)
-    st = false 
-    m1 = Chain()   
+    st = false  
+    global m
     if isready(chn)     
-        l,ep,m = take!(chn)
-        @show "in" m  
+        l,ep,m, trn_status = take!(chn)
         if !(stg isa Nothing)      
             if !(stg[1][1].x isa Nothing)
                 append!(stg[1][1].x, ep)
@@ -266,13 +273,12 @@ callback!(app,
             stg = [[(x = [ep], y = [l])]]    
         end
     else
-        st = true
+        @show isopen(chn)
+        throw(PreventUpdate())
     end
     status_val = (st ? "training finished" : "trainig started")
-    if st
-        @show m1
-        # test_render = render_testing(m, X_test,y_test)
-        test_render = "success"
+    if trn_status
+        test_render = render_testing(m, X_test,y_test)
     else
         test_render = dbc_progress(value=(ep/epval)*100)
     end
@@ -284,7 +290,7 @@ callback!(app,
             "mode" => "line",
         ),  
       ]
-    ),st, !st, test_render
+    ),trn_status, !trn_status, test_render
 end
 
 run_server(app, "0.0.0.0", 8050, debug=true)
