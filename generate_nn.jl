@@ -56,10 +56,11 @@ function train_nn(X_train, y_train, in_labels, out_labels, hidden_outs, chn; tra
       end
   return 0
 end
-function test_nn(m,x,y)
-  yₚ = m(x)
+function test_nn(trained_model,x,y)
+  yₚ = trained_model(x)
   maerr = Flux.Losses.mae(yₚ, y) #mean absolute error
   mserr = Flux.Losses.mse(yₚ, y) #mean square error
   crenpy = Flux.Losses.crossentropy(yₚ, y) #cross entropy
+  
   return yₚ, maerr, mserr, crenpy
 end

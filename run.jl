@@ -15,6 +15,10 @@ external_stylesheets = "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.
 
 chn = Channel{Tuple{Float64, Int, Chain}}(Inf)
 m = nothing
+in_labels = nothing
+out_labels = nothing
+X_test = nothing
+y_test = nothing
 app = dash(external_stylesheets=[dbc_themes.BOOTSTRAP,external_stylesheets], 
     suppress_callback_exceptions=true)
 
@@ -101,13 +105,18 @@ callback!(app,
     State("dflx-data-memory", "data"),
     State("dflx-nntrain-percent", "value"),  
     State("dflx-nntrain-epoch", "value"),   
-    prevent_initial_call=true) do nclicks, in_labels, out_labels, child, df, tr_len, ep
+    prevent_initial_call=true) do nclicks, labels_in, labels_out, child, df, tr_len, ep
     if child isa Nothing
         throw(PreventUpdate())
     end 
+    global in_labels
+    global out_labels
+    in_labels = labels_in
+    out_labels = labels_out
+    global X_test
+    global y_test
     new_tp = DataFrame(;zip(Tuple(Symbol.(df.colindex.names)), Tuple(df.columns))...)  
     X_train, X_test, y_train, y_test = format_nn_data(new_tp, in_labels, out_labels; training_percent=tr_len) 
-    
     hidden_outs = [ch.props.children[1].props.children[1].props.children[2].props.value for ch in child] 
     @async train_nn(X_train, y_train, in_labels, out_labels, hidden_outs, chn; training_percent = tr_len, ep = ep)
     return render_training(), X_test, y_test, in_labels, out_labels
@@ -118,21 +127,19 @@ callback!(app,
   Output("interval-component", "disabled"),
   Output("dflx-pred-tab", "disabled"),
   Output("dflx-testing-section", "children"),
+  Output("dflx-pred-tab", "children"),
   Input("interval-component", "n_intervals"),
   State("live-update-graph", "figure"),
-  State("dflx-nntrain-epoch", "value"), 
-  State("dflx-testdataX-memory", "data"),
-  State("dflx-testdatay-memory", "data"),
-  State("dflx-inlabels-memory", "data"),
-  State("dflx-outlabels-memory", "data"),
-  prevent_initial_call=true) do n, stg,epval, X_test, y_test, in_labels, out_labels
-    len_X = in_labels isa String ? 1 : length(in_labels)
-    len_y = out_labels isa String ? 1 : length(out_labels)
-    X_test = reshape(X_test, len_X, :)
-    y_test = reshape(y_test, len_y, :)
-    st = false  
+  State("dflx-nntrain-epoch", "value"),
+  prevent_initial_call=true) do n, stg,epval
     global m
-    if isready(chn)     
+    global X_test 
+    global y_test
+    st = false  
+    if n >= epval
+        st = true 
+    end
+    if isready(chn) && (n <= epval)    
         l,ep,m = take!(chn)
         if !(stg isa Nothing)      
             if !(stg[1][1].x isa Nothing)
@@ -142,15 +149,14 @@ callback!(app,
         else  
             stg = [[(x = [ep], y = [l])]]    
         end
-    else
-        st = true
     end
-    status_val = (st ? "training finished" : "trainig started")
     if st
         test_render = render_testing(m, X_test,y_test)
+        pred_render = render_prediction_componnets(in_labels)
     else
         test_render = dbc_progress(value=(ep/epval)*100)
-    end
+        pred_render = html_div()
+    end   
     return Dict(
       "data" => [
         Dict(
@@ -159,7 +165,28 @@ callback!(app,
             "mode" => "line",
         ),  
       ]
-    ),st, !st, test_render
+    ),st, !st, test_render, pred_render
+end
+
+callback!(app, 
+    Output("pred_out", "children"),
+    Input((index = ALL, type = "preddone"), "value")
+) do in_values
+    global m
+    global out_labels
+    if (in_values isa Vector) && !(nothing in in_values)
+        prediction =  m(in_values)
+        return [
+            html_div([
+                dcc_input(
+                    id = (index = idx, type = "preddout"),
+                    value = val,
+                    disabled = true
+                ) 
+            ]) for (idx, val) in enumerate(prediction)]
+    else
+        return html_div("nothing")
+    end 
 end
 
 run_server(app, "0.0.0.0", 8050, debug=true)

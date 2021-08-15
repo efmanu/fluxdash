@@ -131,7 +131,74 @@ function render_nn_tab()
   id="dflx-nn-tab", label="NN Config", tab_id="tab-2", disabled="true")
 end
 function render_prediction_tab()
-  return dbc_tab(id="dflx-pred-tab", label="Prediction", tab_id="tab-3", disabled="true") 
+  return dbc_tab(
+    id="dflx-pred-tab", label="Prediction", 
+    tab_id="tab-3", disabled="true",
+    style = Dict("margin-top" => "20px"),
+  ) 
+end
+function render_prediction_componnets(labels_in)
+  if labels_in isa Nothing
+    in_card = [
+        html_div([
+          dcc_input(
+              id = (index = 1, type = "preddone"),
+              placeholder = "nothing",
+              type = "number",
+              disabled=true
+          ) 
+      ])
+    ]
+  elseif labels_in isa Vector
+      in_card = [
+          html_div([
+            dcc_input(
+                id = (index = i, type = "preddone"),
+                placeholder = val,
+                type = "number"
+            ) 
+        ]) for (i,val) in enumerate(labels_in)
+      ]
+  elseif labels_in isa String
+      in_card = [
+            html_div([
+              dcc_input(
+                  id = (index = 1, type = "preddone"),
+                  placeholder = labels_in,
+                  type = "number"
+              ) 
+          ])
+        ]
+  end
+  return dbc_row([
+      dbc_col([
+        dbc_card(
+            dbc_cardbody([
+                html_h5("Input", className="card-title"),
+                html_div(
+                  in_card
+                )
+            ]),
+        )
+      ],md=4),
+      dbc_col([
+        dbc_card(
+            dbc_cardbody([
+                html_h5("Neural network", className="card-title")
+            ]),
+        )
+      ],md=4),
+      dbc_col([
+        dbc_card(
+            dbc_cardbody([
+                html_h5("Output", className="card-title"),
+                html_div(
+                  id="pred_out"
+                )
+            ]),
+        )
+      ],md=4)
+  ], align="center")
 end
 function render_table(df, filename; n_rows = 1)
   df = df[!, Not("id")]
@@ -241,6 +308,19 @@ function render_training()
   ])
 end
 function render_testing(m, X_test,y_test)
-  yₚ, maerr, mserr, crenpy = test_nn(m,X_test,y_test)
-  return html_div("test finished error is: $maerr")
+  yₚ, maerr, mserr, crenpy = (nothing,nothing,nothing,nothing)
+  try
+    yₚ, maerr, mserr, crenpy = test_nn(m,X_test,y_test)    
+  catch e
+  end
+  row1 = html_tr([html_td("Mean Absolute Error"), html_td(maerr)])
+  row2 = html_tr([html_td("Mean Squared Error"), html_td(mserr)])
+  row3 = html_tr([html_td("Crossentropy"), html_td(crenpy)])
+  table_header = [html_thead(html_tr([html_th("Measure"), html_th("Value")]))]
+
+  table_body = [html_tbody([row1, row2, row3])]
+  return html_div([
+    html_h3("Test Results")
+    dbc_table([table_header ; table_body], bordered=true)
+  ])
 end
