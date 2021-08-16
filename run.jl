@@ -152,6 +152,8 @@ callback!(app,
         else  
             stg = [[(x = [ep], y = [l])]]    
         end
+    elseif stg isa Nothing
+        throw(PreventUpdate())
     end
     if st
         test_render = render_testing(m, X_test,y_test)
@@ -159,16 +161,17 @@ callback!(app,
     else
         test_render = dbc_progress(value=(ep/epval)*100)
         pred_render = html_div()
-    end   
+    end 
     return Dict(
-      "data" => [
+    "data" => [
         Dict(
             "x" => stg[1][1].x,
             "y" =>stg[1][1].y,
             "mode" => "line",
         ),  
-      ]
-    ),st, !st, test_render, pred_render
+    ]
+    ),st, !st, test_render, pred_render 
+    
 end
 
 callback!(app, 
