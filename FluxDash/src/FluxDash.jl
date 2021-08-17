@@ -181,6 +181,7 @@ function make_app()
 	        end
 	    elseif stg isa Nothing
 	    	@show "in PreventUpdate"
+	    	sleep(0.1)
 	        throw(PreventUpdate())
 	    end
 	    if st
