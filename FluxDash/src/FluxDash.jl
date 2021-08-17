@@ -168,8 +168,9 @@ function make_app()
 	    if n >= epval
 	        st = true 
 	    end
-	    if isready(chn) && (n <= epval)    
-	        l,ep,m = take!(chn)
+	    if isready(chn) && (n <= epval)
+	    	l,ep,m = take!(chn)
+	    	@show ep 
 	        if !(stg isa Nothing)      
 	            if !(stg[1][1].x isa Nothing)
 	                append!(stg[1][1].x, ep)
@@ -179,6 +180,7 @@ function make_app()
 	            stg = [[(x = [ep], y = [l])]]    
 	        end
 	    elseif stg isa Nothing
+	    	@show "in PreventUpdate"
 	        throw(PreventUpdate())
 	    end
 	    if st
@@ -188,6 +190,7 @@ function make_app()
 	        test_render = dbc_progress(value=(ep/epval)*100)
 	        pred_render = html_div()
 	    end 
+	    @show isready(chn) st stg n
 	    return Dict(
 	    "data" => [
 	        Dict(
