@@ -95,13 +95,15 @@ function train_nn(X_train, y_train, in_labels, out_labels,
 
   # Flux.@epochs ep Flux.train!(L, ps, data, opt, cb = () -> stfunc())
   training_loss = 0.0
+    @show "here in begin nn"	
       for i in 1:ep
         for d in data
           gs = Flux.gradient(ps) do
             training_loss =L(d...)
             return training_loss
           end			
-          Flux.Optimise.update!(opt, ps, gs)		
+          Flux.Optimise.update!(opt, ps, gs)
+          @show "here in end nn" 	
         end
         put!(chn, (training_loss, i, m))
         # println("Traing loss: ", training_loss," Epoch: ", i)

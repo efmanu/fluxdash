@@ -164,13 +164,14 @@ function make_app()
 	    global m
 	    global X_test 
 	    global y_test
-	    st = false  
-	    if n >= epval
-	        st = true 
-	    end
-	    if isready(chn) && (n <= epval)
+	    st = false 
+		ep = 1
+	    if isready(chn)
 	    	l,ep,m = take!(chn)
 	    	@show ep 
+			if ep == epval
+				st = true 
+			end
 	        if !(stg isa Nothing)      
 	            if !(stg[1][1].x isa Nothing)
 	                append!(stg[1][1].x, ep)
@@ -179,8 +180,9 @@ function make_app()
 	        else  
 	            stg = [[(x = [ep], y = [l])]]    
 	        end
-	    elseif stg isa Nothing
-	    	@show "in PreventUpdate"
+		end
+	    if stg isa Nothing
+	    	@show "in PreventUpdate" n epval
 	    	sleep(0.1)
 	        throw(PreventUpdate())
 	    end
