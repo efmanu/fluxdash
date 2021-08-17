@@ -248,12 +248,6 @@ git-tree-sha1 = "1286e5dd0b4c306108747356a7a5d39a11dc4080"
 uuid = "587475ba-b771-5e3f-ad9e-33799f191a9c"
 version = "0.12.6"
 
-[[FluxDash]]
-deps = ["Base64", "CSV", "Dash", "DashBootstrapComponents", "DashCoreComponents", "DashDaq", "DashHtmlComponents", "DashTable", "DataFrames", "Dates", "Flux", "PlotlyJS", "Random", "StatsBase"]
-path = "FluxDash"
-uuid = "a4067280-5ef1-4e64-8bc5-f27421e008ac"
-version = "0.1.0"
-
 [[Formatting]]
 deps = ["Printf"]
 git-tree-sha1 = "8339d61043228fdd3eb658d86c926cb282ae72a8"
