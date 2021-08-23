@@ -328,15 +328,23 @@ function render_nn_layer(n_click)
   
 end
 function render_training()
+  global x_graph
+  global y_graph
   return dbc_row([
       dbc_col([
           dcc_interval(
               id="interval-component",
-              interval=100, # in milliseconds
+              interval=1000, # in milliseconds
               n_intervals=0,
               disabled=false
           ),
-          dcc_graph(id="live-update-graph")
+          dcc_graph(id="live-update-graph",
+            figure=Dict(
+                "data" => [
+                    Dict("x" => x_graph, "y" => y_graph),
+                ]
+            )
+          )
       ]),
       dbc_col([
          html_div(id="dflx-testing-section")

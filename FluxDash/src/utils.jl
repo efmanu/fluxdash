@@ -19,3 +19,9 @@ function parse_contents(contents, filename)
    shuffle_data[!,"id"] = 1:n_row
   return shuffle_data
 end
+
+function reset_vars()
+  global m, ep, st, x_graph, y_graph
+  m, ep, st, x_graph, y_graph = nothing, 0, false, [], []
+  return 0
+end

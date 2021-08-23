@@ -11,6 +11,18 @@ using Random, StatsBase
 using Flux
 using Flux: Data.DataLoader
 
+#Initialize channel to get data during training
+chn = Channel{Tuple{Float64, Int, Chain}}(Inf)
+m = nothing #Initialized Chain
+in_labels = nothing #Intialized label name vector corresponds to input data
+out_labels = nothing #Intialized label name vector corresponds to output data
+X_test = nothing #Intialized input test data
+y_test = nothing #Intialized output test data
+ep = 0
+st = false 
+x_graph = []
+y_graph = []
+
 include("utils.jl")
 include("render_dhc.jl")
 include("generate_nn.jl")
@@ -19,6 +31,7 @@ function make_app()
 	#CDN for fonts
 	external_stylesheets = "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"
 
+	global chn, m, in_labels, out_labels, X_test, y_test,ep, st, x_graph, y_graph
 	#Initialize channel to get data during training
 	chn = Channel{Tuple{Float64, Int, Chain}}(Inf)
 	m = nothing #Initialized Chain
@@ -26,7 +39,10 @@ function make_app()
 	out_labels = nothing #Intialized label name vector corresponds to output data
 	X_test = nothing #Intialized input test data
 	y_test = nothing #Intialized output test data
-
+	ep = 0
+	st = false 
+	x_graph = []
+	y_graph = []
 	app = dash(external_stylesheets=[dbc_themes.BOOTSTRAP,external_stylesheets], 
 	    suppress_callback_exceptions=true)
 
@@ -129,7 +145,7 @@ function make_app()
 	    State("dflx-nntrain-epoch", "value"), 
 	    State("dflx-nntrain-optimizer","value"), 
 	    State("dflx-nntrain-lrate","value"),
-	    prevent_initial_call=true) do nclicks, labels_in, labels_out, child, df, tr_len, ep, opt, eta
+	    prevent_initial_call=true) do nclicks, labels_in, labels_out, child, df, tr_len, epval, opt, eta
 	    if child isa Nothing
 	        throw(PreventUpdate())
 	    end 
@@ -143,10 +159,11 @@ function make_app()
 	    X_train, X_test, y_train, y_test = format_nn_data(new_tp, in_labels, out_labels; training_percent=tr_len) 
 	    hidden_outs = [ch.props.children[1].props.children[1].props.children[2].props.value for ch in child]
 	    hidden_activations = [ch.props.children[1].props.children[1].props.children[3].props.value for ch in child]  
-	    @async train_nn(X_train, y_train, in_labels, out_labels, hidden_outs, chn, hidden_activations; training_percent = tr_len, ep = ep, opt = opt, eta = eta)
+		reset_vars()
+	    train_nn(X_train, y_train, in_labels, out_labels, hidden_outs, chn, hidden_activations; training_percent = tr_len, epoc = epval, opt = opt, eta = eta)
 	    return render_training(), X_test, y_test, in_labels, out_labels
 	end
-
+	
 	#=
 	This callback updates the loss vs epoch graph every 100 ms and stop updation if 
 	training finished. Also renders test results, if training is finished
@@ -160,32 +177,33 @@ function make_app()
 	  Input("interval-component", "n_intervals"),
 	  State("live-update-graph", "figure"),
 	  State("dflx-nntrain-epoch", "value"),
-	  prevent_initial_call=true) do n, stg,epval
-	    global m
+	  prevent_initial_call=true) do n, stg, epval
+	    global m, ep, st
+		global x_graph, y_graph
 	    global X_test 
 	    global y_test
-	    st = false 
-		ep = 1
 	    if isready(chn)
 	    	l,ep,m = take!(chn)
-	    	@show ep 
-			if ep == epval
-				st = true 
+			if ep >= epval
+				st = true
 			end
-	        if !(stg isa Nothing)      
-	            if !(stg[1][1].x isa Nothing)
-	                append!(stg[1][1].x, ep)
-	                append!(stg[1][1].y, l)
-	            end  
-	        else  
-	            stg = [[(x = [ep], y = [l])]]    
-	        end
+			append!(x_graph, ep)
+			append!(y_graph, l)
+	        # if !(stg isa Nothing)      
+	        #     if !(stg[1][1].x isa Nothing)
+	        #         append!(x_graph, ep)
+	        #         append!(y_graph, l)
+	        #     end  
+	        # else  
+	        #     stg = [[(x = [ep], y = [l])]]    
+	        # end
+			@show "in chaining" isready(chn) (stg isa Nothing) n epval st ep
+		# elseif !(isready(chn)) #&& (stg isa Nothing)
+		# 	@show "in PreventUpdate" isready(chn) (stg isa Nothing) n epval st ep
+		# 	sleep(0.1)
+		# 	throw(PreventUpdate())
 		end
-	    if stg isa Nothing
-	    	@show "in PreventUpdate" n epval
-	    	sleep(0.1)
-	        throw(PreventUpdate())
-	    end
+	    
 	    if st
 	        test_render = render_testing(m, X_test,y_test)
 	        pred_render = render_prediction_componnets(in_labels)
@@ -193,16 +211,18 @@ function make_app()
 	        test_render = dbc_progress(value=(ep/epval)*100)
 	        pred_render = html_div()
 	    end 
-	    @show isready(chn) st stg n
+	    @show "outside everything" isready(chn) (stg isa Nothing) n epval st ep
+		@show x_graph
+		@show y_graph
 	    return Dict(
 	    "data" => [
 	        Dict(
-	            "x" => stg[1][1].x,
-	            "y" =>stg[1][1].y,
+	            "x" => x_graph,
+	            "y" => y_graph,
 	            "mode" => "line",
 	        ),  
 	    ]
-	    ),st, !st, test_render, pred_render 
+	    ), st, !st, test_render, pred_render 
 	    
 	end
 

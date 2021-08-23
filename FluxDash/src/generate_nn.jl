@@ -65,7 +65,7 @@ function generate_dense(in,out, act_fn)
 end
 function train_nn(X_train, y_train, in_labels, out_labels, 
   hidden_outs, chn, hidden_activations; training_percent = 70,
-  ep = 1, opt = "adam", eta = 0.1)
+  epoc = 1, opt = "adam", eta = 0.1)
   data =  DataLoader((X_train,y_train), batchsize=128, shuffle=true)
   in_len = in_labels isa Vector ? length(in_labels) : 1
   out_len = out_labels isa Vector ? length(out_labels) : 1
@@ -80,6 +80,7 @@ function train_nn(X_train, y_train, in_labels, out_labels,
       ) 
     )
   end
+  global m
   m = Chain(
     in_layer,
     hidden_layers...,
@@ -91,23 +92,27 @@ function train_nn(X_train, y_train, in_labels, out_labels,
 
   ps = Flux.params(m)
 
-  # stfunc() = @show(L(X_train,y_train)) 
-
-  # Flux.@epochs ep Flux.train!(L, ps, data, opt, cb = () -> stfunc())
-  training_loss = 0.0
-    @show "here in begin nn"	
-      for i in 1:ep
-        for d in data
-          gs = Flux.gradient(ps) do
-            training_loss =L(d...)
-            return training_loss
-          end			
-          Flux.Optimise.update!(opt, ps, gs)
-          @show "here in end nn" 	
+    training_loss = 0.0
+    for d in data
+      gs = Flux.gradient(ps) do
+        training_loss =L(d...)
+        return training_loss
+      end			
+      Flux.Optimise.update!(opt, ps, gs)          	
+    end
+    put!(chn, (training_loss, 1, m))
+      @async begin
+        for i in 2:epoc
+          for d in data
+            gs = Flux.gradient(ps) do
+              training_loss =L(d...)
+              return training_loss
+            end			
+            Flux.Optimise.update!(opt, ps, gs)          	
+          end
+          put!(chn, (training_loss, i, m))
         end
-        put!(chn, (training_loss, i, m))
-        # println("Traing loss: ", training_loss," Epoch: ", i)
-      end
+      end      
   return 0
 end
 function test_nn(trained_model,x,y)
