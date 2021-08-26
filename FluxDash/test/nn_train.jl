@@ -3,7 +3,7 @@ using FluxDash
 using FluxDash.Flux
 using Random
 
-df = CSV.read("datasets/real_estate.csv", DataFrame)
+df = CSV.read("$(@__DIR__)/../datasets/real_estate.csv", DataFrame)
 
 n_row = nrow(df)
 df = df[shuffle(1:n_row)[:], :] #shuffle data
@@ -25,3 +25,10 @@ FluxDash.train_nn(
     chn, hidden_activations; training_percent = 75,
     epoc = 4, opt = "adam", eta = 0.1
 )
+
+app = FluxDash.make_app()
+
+port = haskey(ENV, "PORT") ? parse(Int64, ENV["PORT"]) : 8050
+
+t = @async FluxDash.Dash.run_server(app, "0.0.0.0", port)
+sleep(120.0)

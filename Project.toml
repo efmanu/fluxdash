@@ -1,4 +1,9 @@
 [deps]
+CSV = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
 Dash = "1b08a953-4be3-4667-9a23-3db579824955"
+DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
+Flux = "587475ba-b771-5e3f-ad9e-33799f191a9c"
 FluxDash = "a4067280-5ef1-4e64-8bc5-f27421e008ac"
+HTTP = "cd3eb016-35fb-5094-929b-558a96fad6f3"
+Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
 Revise = "295af30f-e4ad-537b-8983-00126c2a3abe"
