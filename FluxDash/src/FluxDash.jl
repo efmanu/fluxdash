@@ -69,22 +69,49 @@ function make_app()
 	    Output("dflx-input-name-list", "children"),
 	    Output("dflx-output-name-list", "children"),
 	    Input("dflx-upload-data", "contents"),
+		Input("dflx-def-upload-data", "n_clicks"),
 	    State("dflx-upload-data", "filename"),
-	) do contents, filename
-	    if (contents isa Nothing)
-	        throw(PreventUpdate())
-	    else
-	        df = parse_contents(contents, filename)
-	        return_data = render_table(df, filename; n_rows = 5)
-	        return_graph = render_graph_title(df)      
-	        row_names = names(df)  
-	        row_names = row_names[row_names .!= "id"]
-	        return (
-	            df, return_data,
-	            return_graph, false,
-	            render_mult_graphtitle(row_names, id_val="dflx-nninput-dropdown"), 
-	            render_mult_graphtitle(row_names, id_val="dflx-nnoutput-dropdown")
-	        )
+		State("dflx-def-upload-data-drop", "value")	
+	) do contents, sel_clicks, filename, drop_val
+	
+		ctx1 =callback_context() 
+	    if !(ctx1 isa Nothing)			
+			if !isempty(ctx1.triggered)
+				if ctx1.triggered[1].prop_id == "dflx-upload-data.contents"
+					
+					df = parse_contents(contents, filename)
+				elseif ctx1.triggered[1].prop_id == "dflx-def-upload-data.n_clicks"
+					if drop_val == "1"
+						df = CSV.read(download("https://raw.githubusercontent.com/efmanu/fluxdash/master/FluxDash/datasets/real_estate.csv"), DataFrame)
+						df[!,"id"] = 1:nrow(df)
+						filename = "Real_Estate.csv"
+					elseif drop_val == "2"
+						df = CSV.read(download("https://raw.githubusercontent.com/plotly/datasets/master/solar.csv"), DataFrame)
+						df[!,"id"] = 1:nrow(df)
+						filename = "Solar.csv"
+					elseif drop_val == "3"
+						df = CSV.read(download("https://raw.githubusercontent.com/efmanu/fluxdash/master/FluxDash/datasets/kc_house_data.csv"), DataFrame)
+						df[!,"id"] = 1:nrow(df)
+						filename = "House_Price.csv"
+					else
+						throw(PreventUpdate())					
+					end						
+				end
+				return_data = render_table(df, filename; n_rows = 5)
+				return_graph = render_graph_title(df)      
+				row_names = names(df)  
+				row_names = row_names[row_names .!= "id"]
+				return (
+					df, return_data,
+					return_graph, false,
+					render_mult_graphtitle(row_names, id_val="dflx-nninput-dropdown"), 
+					render_mult_graphtitle(row_names, id_val="dflx-nnoutput-dropdown")
+				)
+			else
+				throw(PreventUpdate())
+			end
+		else
+			throw(PreventUpdate())
 	    end
 	end
 
@@ -189,19 +216,6 @@ function make_app()
 			end
 			append!(x_graph, ep)
 			append!(y_graph, l)
-	        # if !(stg isa Nothing)      
-	        #     if !(stg[1][1].x isa Nothing)
-	        #         append!(x_graph, ep)
-	        #         append!(y_graph, l)
-	        #     end  
-	        # else  
-	        #     stg = [[(x = [ep], y = [l])]]    
-	        # end
-			@show "in chaining" isready(chn) (stg isa Nothing) n epval st ep
-		# elseif !(isready(chn)) #&& (stg isa Nothing)
-		# 	@show "in PreventUpdate" isready(chn) (stg isa Nothing) n epval st ep
-		# 	sleep(0.1)
-		# 	throw(PreventUpdate())
 		end
 	    
 	    if st
@@ -211,9 +225,6 @@ function make_app()
 	        test_render = dbc_progress(value=(ep/epval)*100)
 	        pred_render = html_div()
 	    end 
-	    @show "outside everything" isready(chn) (stg isa Nothing) n epval st ep
-		@show x_graph
-		@show y_graph
 	    return Dict(
 	    "data" => [
 	        Dict(

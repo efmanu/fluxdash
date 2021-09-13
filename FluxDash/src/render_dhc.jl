@@ -18,29 +18,67 @@ function render_all()
     fluid=true
     )
 end
+function render_info()
+  return dbc_jumbotron([
+          html_h1("Dash Flux App", className="dflx-display-3"),
+          html_p(
+              "Web app to generate, train, test neural networks",
+              className="lead",
+          ),
+          html_hr(className="my-2"),
+          html_p("Users can upload data, select paramteres, create neurl network layour,
+          trace the NN training and predict using new data")
+      ])
+end
 function render_data_tab()
   return dbc_tab([
       dbc_cardbody([
           html_div([
-              dcc_upload(
-                  id="dflx-upload-data",
-                  children=html_div([
-                      "Drag and Drop or ",
-                      html_a("Select Files")
-                  ]),
-                  style=Dict(
-                      "width" => "100%",
-                      "height" => "60px",
-                      "lineHeight" => "60px",
-                      "borderWidth" => "1px",
-                      "borderStyle" => "dashed",
-                      "borderRadius" => "5px",
-                      "textAlign" => "center",
-                      "margin" => "10px"
-                  ),
-                  # Allow multiple files to be uploaded
-                  multiple=false
-              ),                                    
+            render_info(),
+              dbc_row([
+                dbc_col(md=3,[
+                  html_div(
+                    id="dflx-def-upload-data",
+                    [
+                      html_label("Select a default dataset:")
+                      dcc_dropdown(
+                        id="dflx-def-upload-data-drop",
+                        options =[
+                            Dict("label" => "Select Data", "value" => "0"),
+                            Dict("label" => "Real Estate", "value" => "1"),
+                            Dict("label" => "Solar", "value" => "2"),
+                            Dict("label" => "House Price", "value" => "3")
+                        ],
+                        value="0"
+                        )
+                    ],
+                  )
+                ]),                
+                dbc_col([
+                  html_h3("OR")
+                ], md=1),
+                dbc_col(md=6, [
+                  dcc_upload(
+                    id="dflx-upload-data",
+                    children=html_div([
+                        "Drag and Drop or ",
+                        html_a("Select Data Files")
+                    ]),
+                    style=Dict(
+                        "width" => "100%",
+                        "height" => "60px",
+                        "lineHeight" => "60px",
+                        "borderWidth" => "1px",
+                        "borderStyle" => "dashed",
+                        "borderRadius" => "5px",
+                        "textAlign" => "center",
+                        "margin" => "10px"
+                    ),
+                    # Allow multiple files to be uploaded
+                    multiple=false
+                )
+                ])
+              ]),                                    
               dbc_row([
                   dbc_col([html_div(id="dflx-output-data-upload")], md=6),
                   dbc_col([html_div(id="dflx-output-plot")], md=6),
@@ -82,7 +120,8 @@ function render_nn_tab()
                                   ], style=Dict("cursor" => "pointer"))
                               ]),
                               dcc_store(id="dflx-nn-layer-count"),
-                              dbc_row(id = "dflx-hidden-layers"),                                                
+                              dbc_row(id = "dflx-hidden-layers",
+                                render_nn_layer(1)),                                                
                               html_div(id="dflx-nnlayer-count", style=Dict("display" => "none"))
                           ]
                       )
