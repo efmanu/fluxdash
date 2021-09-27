@@ -6,9 +6,9 @@ This an app with user interface to create, train and test a deep neural network.
 ## Run Locally
 
 ```julia
-julia> Using Pkg
+julia> using Pkg
 julia> Pkg.activate(".")
-julia> include("run.jl)
+julia> include("run.jl")
 ```
 
 ## App Configuration and setup
